@@ -33,7 +33,7 @@ public class JwtService {
         .signWith(secretKey)
         .issuedAt(Date.from(now))
         .expiration(Date.from(expiry))
-        .subject(user.getUsername())
+        .subject(user.username())
         .compact();
   }
 

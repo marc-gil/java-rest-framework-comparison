@@ -17,7 +17,7 @@ public class UserService implements UserDetailsService {
 
   public User getUser(String username, String password) {
     User user = userRepository.findByUsername(username).orElseThrow();
-    if (!user.getPassword().equals(password)) {
+    if (!user.password().equals(password)) {
       throw new RuntimeException();
     }
     return user;
@@ -27,7 +27,7 @@ public class UserService implements UserDetailsService {
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException("User " + username + " not found"));
-    return new org.springframework.security.core.userdetails.User(username, user.getPassword(),
+    return new org.springframework.security.core.userdetails.User(username, user.password(),
         List.of());
   }
 

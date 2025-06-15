@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -33,8 +34,8 @@ public class AuthorizationFilter extends OncePerRequestFilter {
   }
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-      FilterChain filterChain) throws IOException {
+  protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain) throws IOException {
     String authorization = request.getHeader("Authorization");
     if (authorization == null || !authorization.startsWith(BEARER_HEADER_PREFIX)) {
       response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");

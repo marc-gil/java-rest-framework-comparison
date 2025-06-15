@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 public class UserMockRepository implements UserRepository {
 
   private static final Map<String, User> USERS = Stream.of(new User("test-user", "test-password"))
-      .collect(Collectors.toMap(User::getUsername, Function.identity()));
+      .collect(Collectors.toMap(User::username, Function.identity()));
 
   @Override
   public Optional<User> findByUsername(String username) {

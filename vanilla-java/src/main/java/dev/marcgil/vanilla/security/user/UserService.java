@@ -10,7 +10,7 @@ public class UserService {
 
   public User getUser(String username, String password) {
     User user = userRepository.findByUsername(username).orElseThrow();
-    if (!user.getPassword().equals(password)) {
+    if (!user.password().equals(password)) {
       throw new RuntimeException();
     }
     return user;
