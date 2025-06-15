@@ -7,12 +7,12 @@ import dev.marcgil.vanilla.http.RoutesHandler;
 import java.io.IOException;
 import java.util.List;
 
-public class ActuatorController implements RoutesHandler {
+public class ActuatorHandler implements RoutesHandler {
 
   private static final String ACTUATOR_PATH = "/actuator/health";
   private final List<RouteHandler> routeHandlers;
 
-  public ActuatorController() {
+  public ActuatorHandler() {
     this.routeHandlers = RouteBuilder.builder()
         .get(ACTUATOR_PATH, this::handleActuatorUp)
         .fallback(ACTUATOR_PATH, this::notImplementedResponse)

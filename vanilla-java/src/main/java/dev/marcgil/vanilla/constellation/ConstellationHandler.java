@@ -9,14 +9,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ConstellationRestController implements RoutesHandler {
+public class ConstellationHandler implements RoutesHandler {
 
   public static final String CONSTELLATIONS = "/constellations";
 
   private final List<RouteHandler> routeHandlers;
   private final ConstellationService constellationService;
 
-  public ConstellationRestController(ConstellationService constellationService) {
+  public ConstellationHandler(ConstellationService constellationService) {
     this.constellationService = constellationService;
     this.routeHandlers = buildRoutes();
   }
