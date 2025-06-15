@@ -33,10 +33,6 @@ public class ConstellationPostgresqlRepository implements ConstellationRepositor
     }
   }
 
-  private Connection getConnection() {
-    return databaseConnectionHandler.getConnection();
-  }
-
   @Override
   public Optional<Constellation> findById(int constellationId) {
     String sqlQuery = "SELECT * FROM constellations WHERE id = " + constellationId;
@@ -53,20 +49,27 @@ public class ConstellationPostgresqlRepository implements ConstellationRepositor
 
   @Override
   public Constellation save(Constellation constellation) {
-    String sqlQuery = String.format(
-        "INSERT INTO constellations (name, hemisphere, description) VALUES (%s, %s, %s) RETURNING id, name, hemisphere, description",
-        constellation.getName(), constellation.getHemisphere(), constellation.getDescription());
-    try (PreparedStatement preparedStatement = getConnection().prepareStatement(sqlQuery);
-        ResultSet resultSet = preparedStatement.executeQuery(sqlQuery)) {
-      if (resultSet.next()) {
-        return mapRowToModel(resultSet);
-      } else {
-        throw new SQLException("Insert failed, no row returned");
+    String sqlQuery = "INSERT INTO constellations (name, hemisphere, description) VALUES (?, ? ,?) RETURNING id, name, hemisphere, description";
+    try (PreparedStatement preparedStatement = getConnection().prepareStatement(sqlQuery)) {
+      preparedStatement.setString(1, constellation.getName());
+      preparedStatement.setString(2, constellation.getHemisphere());
+      preparedStatement.setString(3, constellation.getDescription());
+      try (ResultSet resultSet = preparedStatement.executeQuery()) {
+        if (resultSet.next()) {
+          return mapRowToModel(resultSet);
+        } else {
+          throw new SQLException("Insert failed, no row returned");
+        }
       }
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
   }
+
+  private Connection getConnection() {
+    return databaseConnectionHandler.getConnection();
+  }
+
 
   private Constellation mapRowToModel(ResultSet resultSet) throws SQLException {
     int id = resultSet.getInt("id");

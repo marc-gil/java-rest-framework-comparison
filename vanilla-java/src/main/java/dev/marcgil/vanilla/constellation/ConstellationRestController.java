@@ -1,49 +1,44 @@
 package dev.marcgil.vanilla.constellation;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
+import dev.marcgil.vanilla.http.RouteHandler;
+import dev.marcgil.vanilla.http.RouteHandler.RouteBuilder;
+import dev.marcgil.vanilla.http.RoutesHandler;
 import dev.marcgil.vanilla.json.Json;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ConstellationRestController implements HttpHandler {
+public class ConstellationRestController implements RoutesHandler {
 
   public static final String CONSTELLATIONS = "/constellations";
 
+  private final List<RouteHandler> routeHandlers;
   private final ConstellationService constellationService;
 
   public ConstellationRestController(ConstellationService constellationService) {
     this.constellationService = constellationService;
+    this.routeHandlers = buildRoutes();
   }
 
-  @Override
-  public void handle(HttpExchange exchange) throws IOException {
-    String path = exchange.getRequestURI().getPath();
-    String method = exchange.getRequestMethod();
-    if (path.equals(CONSTELLATIONS) && method.equals("GET")) {
-      handleGetAllConstellations(exchange);
-    } else if (path.matches(CONSTELLATIONS + "/\\d+") && method.equals("GET")) {
-      handleGetConstellationById(exchange);
-    } else if (path.equals(CONSTELLATIONS) && method.equals("POST")) {
-      handleCreateConstellation(exchange);
-    } else {
-      String response = "Not Found";
-      sendResponse(response, exchange, 404);
-    }
-    exchange.close();
+  private List<RouteHandler> buildRoutes() {
+    return RouteBuilder.builder()
+        .get(CONSTELLATIONS, this::handleGetAllConstellations)
+        .get((path, method) -> path.matches(CONSTELLATIONS + "/\\d+"),
+            this::handleGetConstellationById)
+        .post(CONSTELLATIONS, this::handleCreateConstellation)
+        .fallback(CONSTELLATIONS, exchange -> sendResponse("Not Found", exchange, 404))
+        .build();
   }
 
-  private void handleGetAllConstellations(HttpExchange exchange) throws IOException {
+  public void handleGetAllConstellations(HttpExchange exchange) {
     List<Constellation> constellations = constellationService.getAllConstellations();
     sendJsonResponse(constellations.stream().map(Json::from).collect(
         Collectors.joining(",", "[", "]")), exchange, 200);
   }
 
-  private void handleGetConstellationById(HttpExchange exchange) throws IOException {
-    String[] parts = exchange.getRequestURI().getPath().split("/");
-    int constellationId = Integer.parseInt(parts[2]);
+  private void handleGetConstellationById(HttpExchange exchange) {
+    int constellationId = extractConstellationId(exchange);
     Constellation constellation = constellationService.getConstellationById(constellationId);
     if (constellation != null) {
       sendJsonResponse(Json.from(constellation), exchange, 200);
@@ -55,25 +50,29 @@ public class ConstellationRestController implements HttpHandler {
     }
   }
 
-  private void handleCreateConstellation(HttpExchange exchange) throws IOException {
-    String requestBody = new String(exchange.getRequestBody().readAllBytes());
-    Constellation constellation = Json.to(requestBody, Constellation.class);
-    Constellation createdConstellation = constellationService.create(constellation);
-    sendJsonResponse(Json.from(createdConstellation), exchange, 201);
+  private int extractConstellationId(HttpExchange exchange) {
+    String[] parts = exchange.getRequestURI().getPath().split("/");
+    return Integer.parseInt(parts[2]);
   }
 
-  private void sendJsonResponse(String response, HttpExchange exchange, int statusCode)
-      throws IOException {
-    exchange.getResponseHeaders().set("Content-Type", "application/json");
-    sendResponse(response, exchange, statusCode);
-  }
-
-  private void sendResponse(String response, HttpExchange exchange, int statusCode)
-      throws IOException {
-    exchange.sendResponseHeaders(statusCode, response.getBytes().length);
-    try (OutputStream os = exchange.getResponseBody()) {
-      os.write(response.getBytes());
+  private void handleCreateConstellation(HttpExchange exchange) {
+    try {
+      Constellation constellation = parseRequestBody(exchange);
+      Constellation createdConstellation = constellationService.create(constellation);
+      sendJsonResponse(Json.from(createdConstellation), exchange, 201);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  private Constellation parseRequestBody(HttpExchange exchange) throws IOException {
+    String requestBody = new String(exchange.getRequestBody().readAllBytes());
+    return Json.to(requestBody, Constellation.class);
+  }
+
+  @Override
+  public List<RouteHandler> getHandlers() {
+    return routeHandlers;
   }
 
 }

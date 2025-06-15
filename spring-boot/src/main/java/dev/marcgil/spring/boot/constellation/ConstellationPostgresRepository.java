@@ -21,33 +21,25 @@ public class ConstellationPostgresRepository implements ConstellationRepository 
   @Override
   public List<Constellation> findAll() {
     String sqlQuery = "SELECT * FROM constellations";
-    return jdbcTemplate.query(sqlQuery, this::mapRowToModelWithRow);
+    return jdbcTemplate.query(sqlQuery, this::mapRowToModel);
   }
 
   @Override
   public Optional<Constellation> findById(int constellationId) {
-    String sqlQuery = "SELECT * FROM constellations WHERE id = " + constellationId;
-    return Optional.ofNullable(jdbcTemplate.query(sqlQuery, this::mapRowToModel));
+    String sqlQuery = "SELECT * FROM constellations WHERE id = ?";
+    return Optional.ofNullable(
+        jdbcTemplate.queryForObject(sqlQuery, this::mapRowToModel, constellationId));
   }
 
   @Override
   public Constellation save(Constellation constellation) {
-    String sqlQuery = String.format(
-        "INSERT INTO constellations (name, hemisphere, description) VALUES (%s, %s, %s) RETURNING id, name, hemisphere, description",
-        constellation.getName(), constellation.getHemisphere(), constellation.getDescription());
-    return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToModelWithRow);
+    String sqlQuery = "INSERT INTO constellations (name, hemisphere, description) VALUES (?, ?, ?) RETURNING id, name, hemisphere, description";
+    return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToModel, constellation.getName(),
+        constellation.getHemisphere(), constellation.getDescription());
   }
 
-  private Constellation mapRowToModelWithRow(ResultSet resultSet, int rowNumber)
+  private Constellation mapRowToModel(ResultSet resultSet, int rowNumber)
       throws SQLException {
-    int id = resultSet.getInt("id");
-    String name = resultSet.getString("name");
-    String hemisphere = resultSet.getString("hemisphere");
-    String description = resultSet.getString("description");
-    return new Constellation(id, name, hemisphere, description);
-  }
-
-  private Constellation mapRowToModel(ResultSet resultSet) throws SQLException {
     int id = resultSet.getInt("id");
     String name = resultSet.getString("name");
     String hemisphere = resultSet.getString("hemisphere");

@@ -1,23 +1,39 @@
 package dev.marcgil.vanilla.root;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
+import dev.marcgil.vanilla.http.RouteHandler;
+import dev.marcgil.vanilla.http.RoutesHandler;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 
-public class RootHandler implements HttpHandler {
+public class RootHandler implements RoutesHandler {
 
-  @Override
-  public void handle(HttpExchange exchange) throws IOException {
+  private final List<RouteHandler> routeHandlers;
+
+  public RootHandler() {
+    routeHandlers = List.of(new RouteHandler((path, method) -> true, this::handleRootMessage));
+  }
+
+  private void handleRootMessage(HttpExchange exchange) {
     String response = """
-        {"message": I´m a vanilla java server application"}
+        {"message": "I´m a vanilla java server application"}
         """;
     exchange.getResponseHeaders().set("Content-Type", "application/json");
-    exchange.sendResponseHeaders(200, response.getBytes().length);
-
-    try (OutputStream os = exchange.getResponseBody()) {
-      os.write(response.getBytes());
+    try {
+      exchange.sendResponseHeaders(200, response.getBytes().length);
+      try (OutputStream os = exchange.getResponseBody()) {
+        os.write(response.getBytes());
+      }
+      exchange.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public List<RouteHandler> getHandlers() {
+    return routeHandlers;
   }
 
 }

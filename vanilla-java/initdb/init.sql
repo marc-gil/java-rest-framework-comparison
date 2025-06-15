@@ -8,3 +8,15 @@ CREATE TABLE constellations (
 );
 
 INSERT INTO constellations (name, hemisphere, description) VALUES ('Orion', 'Equatorial', 'Orion has 81 starts');
+
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO users (username, password) VALUES ('test-user', 'test-password');

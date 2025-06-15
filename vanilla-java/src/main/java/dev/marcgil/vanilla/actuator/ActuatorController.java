@@ -1,25 +1,41 @@
 package dev.marcgil.vanilla.actuator;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
+import dev.marcgil.vanilla.http.RouteHandler;
+import dev.marcgil.vanilla.http.RouteHandler.RouteBuilder;
+import dev.marcgil.vanilla.http.RoutesHandler;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.util.List;
 
-public class ActuatorController implements HttpHandler {
+public class ActuatorController implements RoutesHandler {
+
+  private static final String ACTUATOR_PATH = "/actuator/health";
+  private final List<RouteHandler> routeHandlers;
+
+  public ActuatorController() {
+    this.routeHandlers = RouteBuilder.builder()
+        .get(ACTUATOR_PATH, this::handleActuatorUp)
+        .fallback(ACTUATOR_PATH, this::notImplementedResponse)
+        .build();
+  }
+
+  private void handleActuatorUp(HttpExchange exchange) {
+    String response = "{\"status\":\"UP\"}";
+    sendJsonResponse(response, exchange, 200);
+  }
+
+  private void notImplementedResponse(HttpExchange exchange) {
+    try {
+      exchange.sendResponseHeaders(405, -1);
+      exchange.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @Override
-  public void handle(HttpExchange exchange) throws IOException {
-    if ("GET".equals(exchange.getRequestMethod())) {
-      String response = "{\"status\":\"UP\"}";
-      exchange.sendResponseHeaders(200, response.getBytes().length);
-      exchange.getResponseHeaders().set("Content-Type", "application/json");
-      try (OutputStream os = exchange.getResponseBody()) {
-        os.write(response.getBytes());
-      }
-    } else {
-      exchange.sendResponseHeaders(405, -1);
-    }
-    exchange.close();
+  public List<RouteHandler> getHandlers() {
+    return routeHandlers;
   }
 
 }

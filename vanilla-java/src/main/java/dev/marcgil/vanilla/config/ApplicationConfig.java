@@ -12,6 +12,7 @@ public class ApplicationConfig {
   private final String dbUrl;
   private final String dbUser;
   private final String dbPassword;
+  private final String secret;
   private final DatabaseAdapter dbAdapter;
 
   public ApplicationConfig(String propertiesFileName) {
@@ -36,6 +37,7 @@ public class ApplicationConfig {
     this.dbAdapter = Optional.ofNullable(properties.getProperty("db.adapter"))
         .map(this::toDatabaseAdapter)
         .orElse(DatabaseAdapter.MOCK);
+    this.secret = properties.getProperty("security.authentication.secret");
   }
 
   private DatabaseAdapter toDatabaseAdapter(String property) {
@@ -64,6 +66,10 @@ public class ApplicationConfig {
 
   public String getDbUser() {
     return dbUser;
+  }
+
+  public String getSecret() {
+    return secret;
   }
 
   public String getProperty(String property) {
